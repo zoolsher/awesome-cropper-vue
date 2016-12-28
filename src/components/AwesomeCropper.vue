@@ -1,10 +1,9 @@
-import Vue from 'vue'
 <template>
   <canvas width="500px" height="500px"></canvas>
 </template>
 <script>
   import platform from 'platform'
-  const LONG_TIRM = 500
+  const LONG_TIRM = 1000
   export default {
     name: 'awesome-cropper',
     data () {
@@ -22,11 +21,12 @@ import Vue from 'vue'
         lastMove: new Date().getTime(),
         cropX: 20.5,
         cropY: 20.5,
-        cropWidth: 80,
-        cropHeight: 80,
+        cropWidth: 200,
+        cropHeight: 200,
+        cropMax: 0,
         responseEvent: true,
         contactingDirection: 0, // 0 for x ,1 for y
-        src: 'http://square-shit.com/static/image/cover_2.jpg'
+        src: 'http://warehouse.squarance.com/0001-avant-garde-6-2-yaohua-wang.jpg'
       }
     },
     methods: {
@@ -116,13 +116,25 @@ import Vue from 'vue'
         if (this.moveY > this.cropY) {
           newMoveY = this.cropY
         }
-        this.animate(newMoveX, newMoveY)
+        var imageMaxX = this.moveX + (this.originalImageWidth * this.scale)
+        var imageMaxY = this.moveY + (this.originalImageHeight * this.scale)
+        var cropMaxX = this.cropX + this.cropWidth
+        var cropMaxY = this.cropY + this.cropHeight
+        var newScale = this.scale
+        if (imageMaxX < cropMaxX) {
+          newMoveX += (cropMaxX - imageMaxX)
+        }
+        if (imageMaxY < cropMaxY) {
+          newMoveY += (cropMaxY - imageMaxY)
+        }
+        this.animate(newMoveX, newMoveY, newScale)
       },
-      animate: function (moveX, moveY) {
+      animate: function (moveX, moveY, scale) {
         var length = 100
         var counter = 0
         var startX = this.moveX
         var startY = this.moveY
+        var startScale = this.scale
         var that = this
         var timer = setInterval(function () {
           counter++
@@ -132,8 +144,12 @@ import Vue from 'vue'
           if (that.moveY !== moveY) {
             that.moveY = that.easeInOut(counter / length, startY, moveY - startY)
           }
+          if (that.scale !== scale) {
+            that.scale = that.easeInOut(counter / length, startScale, scale - startScale)
+          }
           if (counter > length) {
             clearInterval(timer)
+            that.responseEvent = true
           }
         }, 10)
       },
@@ -142,6 +158,7 @@ import Vue from 'vue'
       },
       longTimeNoMove: function () {
         this.lastMove = new Date().getTime()
+        this.responseEvent = false
         this.animateToNormal()
         this.clearCheckTimer()
       },
@@ -194,9 +211,11 @@ import Vue from 'vue'
         if (scaleX > scaleY) {
           that.scale = scaleY
           that.contactingDirection = 1
+          that.cropMax = this.width / that.scale
         } else {
           that.scale = scaleX
           that.contactingDirection = 0
+          that.cropMax = this.height / that.scale
         }
         that.minScale = that.scale
         that.image = this
