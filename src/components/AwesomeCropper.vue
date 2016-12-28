@@ -24,9 +24,19 @@
         cropWidth: 200,
         cropHeight: 200,
         cropMax: 0,
-        responseEvent: true,
+        responseEventTmp: true,
         contactingDirection: 0, // 0 for x ,1 for y
         src: 'http://warehouse.squarance.com/0001-avant-garde-6-2-yaohua-wang.jpg'
+      }
+    },
+    computed: {
+      responseEvent: {
+        set: function (val) {
+          this.responseEventTmp = val
+        },
+        get: function () {
+          return this.responseEventTmp
+        }
       }
     },
     methods: {
@@ -59,9 +69,11 @@
         this.last_y = evt.y
       },
       removeDragEvent: function (evt) {
-        this.updateLastMove()
-        this.addCheckTimer()
-        this.isdrag = false
+        if (this.isdrag) {
+          this.updateLastMove()
+          this.addCheckTimer()
+          this.isdrag = false
+        }
       },
       dragMove: function (evt) {
         if (!this.responseEvent) {
@@ -200,6 +212,7 @@
     mounted () {
       window.requestAnimationFrame(this.onFrameUpdate)
       let image = new Image()
+      image.crossOrigin = 'Anonymous'
       let that = this
       this.canvasWidth = this.$el.width
       this.canvasHeight = this.$el.height
